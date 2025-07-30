@@ -25,11 +25,14 @@ public class AttackCooldownFix {
 	int last_selected = -1;
 
 	public static Multimap<Holder<Attribute>, AttributeModifier> getAttackSpeed(@NotNull Player player) {
-		Inventory inv = player.getInventory();
 		Multimap<Holder<Attribute>, AttributeModifier>  attack_speed = HashMultimap.create();
-		List<ItemStack> items = new ArrayList<>(inv.armor);
-		items.add(inv.getSelected());
-		items.add(inv.offhand.get(0));
+		List<ItemStack> items = new ArrayList<>();
+		items.add(player.getItemBySlot(EquipmentSlot.HEAD));
+		items.add(player.getItemBySlot(EquipmentSlot.BODY));
+		items.add(player.getItemBySlot(EquipmentSlot.LEGS));
+		items.add(player.getItemBySlot(EquipmentSlot.FEET));
+		items.add(player.getMainHandItem());
+		items.add(player.getOffhandItem());
 		double base = 0.0;
 		double modifier = 0.0;
 		double modifier_final = 0.0;
@@ -76,9 +79,9 @@ public class AttackCooldownFix {
 					new AttributeModifier(nonsenseResourceLocation(), modifier_final, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL)
 		);
 
-		if (player.hasEffect(MobEffects.DIG_SPEED)) attack_speed.put(
+		if (player.hasEffect(MobEffects.HASTE)) attack_speed.put(
 					Attributes.ATTACK_SPEED,
-					new AttributeModifier(nonsenseResourceLocation(), (Objects.requireNonNull(player.getEffect(MobEffects.DIG_SPEED)).getAmplifier() + 1) * .1, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL)
+					new AttributeModifier(nonsenseResourceLocation(), (Objects.requireNonNull(player.getEffect(MobEffects.HASTE)).getAmplifier() + 1) * .1, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL)
 		);
 
 		if (player.hasEffect(MobEffects.CONDUIT_POWER)) attack_speed.put(
@@ -95,8 +98,8 @@ public class AttackCooldownFix {
 
 	public void tick(@NotNull Player player) {
 		Inventory inv = player.getInventory();
-		if (last_selected != inv.selected) {
-			last_selected = inv.selected;
+		if (last_selected != inv.getSelectedSlot()) {
+			last_selected = inv.getSelectedSlot();
 			Multimap<Holder<Attribute>, AttributeModifier> attack_speed = getAttackSpeed(player);
 			AttributeMap attributeMap = player.getAttributes();
 
