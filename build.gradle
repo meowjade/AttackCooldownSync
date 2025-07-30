@@ -1,5 +1,5 @@
 plugins {
-    id 'fabric-loom' version '1.6-SNAPSHOT'
+    id 'fabric-loom' version '1.9.2'
     id 'maven-publish'
 }
 
@@ -34,7 +34,7 @@ dependencies {
 //    mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
     mappings loom.layered() {
         officialMojangMappings()
-        parchment("org.parchmentmc.data:parchment-1.20.4:2024.04.14@zip")
+        parchment("org.parchmentmc.data:parchment-1.21.4:2025.03.23@zip")
     }
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
