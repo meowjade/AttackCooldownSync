@@ -75,7 +75,6 @@ public class AttackCooldownFix {
 					new AttributeModifier(UUID.randomUUID().toString(), (Objects.requireNonNull(player.getEffect(MobEffects.CONDUIT_POWER)).getAmplifier() + 1) * .1, AttributeModifier.Operation.MULTIPLY_TOTAL)
 		);
 
-		System.out.println(base + " " + modifier + " " + modifier_final);
 		return attack_speed;
 	}
 
@@ -85,15 +84,13 @@ public class AttackCooldownFix {
 			last_selected = inv.selected;
 			Multimap<Attribute, AttributeModifier> attack_speed = getAttackSpeed(player);
 			AttributeMap attributeMap = player.getAttributes();
-			//attributeMap.assignValues(new AttributeMap(new AttributeSupplier(map)));
+
 			Set<AttributeModifier> mods = Objects.requireNonNull(attributeMap.getInstance(Attributes.ATTACK_SPEED)).getModifiers();
 			Multimap<Attribute, AttributeModifier> remove = ArrayListMultimap.create();
 			mods.forEach(attributeModifier -> remove.put(Attributes.ATTACK_SPEED, attributeModifier));
 			attributeMap.removeAttributeModifiers(remove);
 			attributeMap.addTransientAttributeModifiers(attack_speed);
-			System.out.println(player.getAttributes().getValue(Attributes.ATTACK_SPEED));
 		}
-		//System.out.println(player.getAttributes().getValue(Attributes.ATTACK_SPEED));
 	}
 }
 
