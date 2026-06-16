@@ -7,6 +7,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundUpdateAttributesPacket;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -90,7 +91,10 @@ public class AttributeDesyncFix {
 			}
 			Inventory inv = player.getInventory();
 
-			oldModifiers.forEach(EquipmentSlot.MAINHAND, (_, attributeModifier) -> {
+			oldModifiers.forEach(EquipmentSlot.MAINHAND, (attributeHolder, attributeModifier) -> {
+				if (attributeHolder != attribute) {
+					return;
+				}
 				instance.removeModifier(attributeModifier);
 			});
 
@@ -99,7 +103,10 @@ public class AttributeDesyncFix {
 			if (newModifiers == null) {
 				continue;
 			}
-			newModifiers.forEach(EquipmentSlot.MAINHAND, (_, attributeModifier) -> {
+			newModifiers.forEach(EquipmentSlot.MAINHAND, (attributeHolder, attributeModifier) -> {
+				if (attributeHolder != attribute) {
+					return;
+				}
 				if (updateAnticipation && anticipated == null) {
 					anticipated = Map.entry(attribute, attributeModifier.id());
 				}
