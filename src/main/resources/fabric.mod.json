@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "id": "attackcooldownsync",
+  "version": "${version}",
+  "name": "Attack Cooldown Resync",
+  "description": "",
+  "authors": [],
+  "contact": {
+    "repo": "https://github.com/catgirljade/AttackCooldownSunc"
+  },
+  "license": "All-Rights-Reserved",
+  "environment": "*",
+  "entrypoints": {
+    "client": [
+      "org.jade.hitcooldownsync.ModClient"
+    ]
+
+  },
+  "mixins": [
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric": "*",
+    "minecraft": "${minecraft_version}"
+  },
+  "custom": {
+    "fabric-renderer-api-v1:contains_renderer": true,
+    "modmenu": {
+    }
+  }
+}
