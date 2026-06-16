@@ -9,7 +9,7 @@
     "repo": "https://github.com/catgirljade/AttackCooldownSunc"
   },
   "license": "All-Rights-Reserved",
-  "environment": "*",
+  "environment": "client",
   "entrypoints": {
     "client": [
       "org.jade.hitcooldownsync.ModClient"

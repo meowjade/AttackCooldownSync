@@ -1,32 +1,34 @@
 package org.jade.hitcooldownsync.features;
 
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.Holder;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.protocol.game.ClientboundUpdateAttributesPacket;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.component.ItemAttributeModifiers;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class AttributeDesyncFix {
 	private static int lastSlot = -1;
-	private static Multimap<Attribute, AttributeModifier> lastItemToServer = HashMultimap.create();
-	private static Multimap<Attribute, AttributeModifier> lastItem = HashMultimap.create();
+	@NotNull
+	private static ItemAttributeModifiers lastItemToServer = ItemAttributeModifiers.EMPTY;
+	@NotNull
+	private static ItemAttributeModifiers lastItem = ItemAttributeModifiers.EMPTY;
 	// Mining speed will be in here later on, speed may not be here because it will be possibly dubious
-	private static final List<Attribute> AFFECTED_ATTRIBUTES = List.of(
+	private static final List<Holder<Attribute>> AFFECTED_ATTRIBUTES = List.of(
 		Attributes.ATTACK_SPEED
 	);
-	@Nullable
-	public static Map.Entry<Attribute, UUID> anticipated = null;
+	public static Map.Entry<Holder<Attribute>, Identifier> anticipated = null;
 
 	public static void handlePacket(ClientboundUpdateAttributesPacket packet) {
 		if (anticipated == null) {
@@ -36,19 +38,20 @@ public class AttributeDesyncFix {
 		if (player == null || packet.getEntityId() != player.getId()) {
 			return;
 		}
-		int selected = player.getInventory().selected;
-		Attribute attribute = anticipated.getKey();
-		UUID uuid = anticipated.getValue();
+		int selected = player.getInventory().getSelectedSlot();
+		Holder<Attribute> attribute = anticipated.getKey();
+		Identifier uuid = anticipated.getValue();
 
 		for (ClientboundUpdateAttributesPacket.AttributeSnapshot value : packet.getValues()) {
-			if (!value.getAttribute().equals(attribute)) {
+			if (!value.attribute().equals(attribute)) {
 				continue;
 			}
-			for (AttributeModifier modifier : value.getModifiers()) {
-				if (modifier.getId().equals(uuid)) {
+			for (AttributeModifier modifier : value.modifiers()) {
+				if (modifier.id().equals(uuid)) {
 					anticipated = null;
-					lastItemToServer = player.getInventory().getItem(lastSlot)
-						.getAttributeModifiers(EquipmentSlot.MAINHAND);
+					lastItemToServer = orElse(player.getInventory()
+						.getItem(lastSlot)
+						.get(DataComponents.ATTRIBUTE_MODIFIERS));
 					return;
 				}
 			}
@@ -58,46 +61,53 @@ public class AttributeDesyncFix {
 	}
 
 	public static void tick(LocalPlayer player) {
-		int selected = player.getInventory().selected;
+		int selected = player.getInventory().getSelectedSlot();
 		if (lastSlot != selected) {
 			replaceAttributes(player, lastItem, selected, true);
 			lastSlot = selected;
-			lastItem = player.getInventory().getItem(selected)
-				.getAttributeModifiers(EquipmentSlot.MAINHAND);
+			lastItem = orElse(player.getInventory()
+				.getItem(selected)
+				.get(DataComponents.ATTRIBUTE_MODIFIERS));
 		}
+	}
+
+	private static @NotNull ItemAttributeModifiers orElse(@Nullable ItemAttributeModifiers modifiers) {
+		return modifiers == null ? ItemAttributeModifiers.EMPTY : modifiers;
 	}
 
 	// I'm not even going to try fixing armor or offhand I'm gonna be honest
 	public static void replaceAttributes(
 		LocalPlayer player,
-		Multimap<Attribute, AttributeModifier> oldModifiers,
+		@NotNull ItemAttributeModifiers oldModifiers,
 		int newSlot,
 		boolean updateAnticipation
 	) {
 		// Swap modifiers and pray to god there's no exception
-		for (Attribute attribute : AFFECTED_ATTRIBUTES) {
+		for (Holder<Attribute> attribute : AFFECTED_ATTRIBUTES) {
 			var instance = player.getAttributes().getInstance(attribute);
 			if (instance == null) {
 				return;
 			}
 			Inventory inv = player.getInventory();
 
-			for (AttributeModifier modifier : oldModifiers.get(attribute)) {
-				instance.removeModifier(modifier.getId());
-			}
+			oldModifiers.forEach(EquipmentSlot.MAINHAND, (_, attributeModifier) -> {
+				instance.removeModifier(attributeModifier);
+			});
 
-			Collection<AttributeModifier> newModifiers = inv.items.get(newSlot)
-				.getAttributeModifiers(EquipmentSlot.MAINHAND)
-				.get(attribute);
-			for (AttributeModifier modifier : newModifiers) {
+			ItemAttributeModifiers newModifiers = inv.getNonEquipmentItems().get(newSlot)
+				.get(DataComponents.ATTRIBUTE_MODIFIERS);
+			if (newModifiers == null) {
+				continue;
+			}
+			newModifiers.forEach(EquipmentSlot.MAINHAND, (_, attributeModifier) -> {
 				if (updateAnticipation && anticipated == null) {
-					anticipated = Map.entry(attribute, modifier.getId());
+					anticipated = Map.entry(attribute, attributeModifier.id());
 				}
 				// It can sometimes be double applied and exception
-				if (!instance.hasModifier(modifier)) {
-					instance.addTransientModifier(modifier);
+				if (!instance.hasModifier(attributeModifier.id())) {
+					instance.addTransientModifier(attributeModifier);
 				}
-			}
+			});
 		}
 	}
 }
