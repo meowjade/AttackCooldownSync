@@ -13,8 +13,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ClientPacketListener.class)
-public abstract class CLientPacketListenerMixin extends ClientCommonPacketListenerImpl {
-	protected CLientPacketListenerMixin(Minecraft minecraft, Connection connection, CommonListenerCookie commonListenerCookie) {
+public abstract class ClientPacketListenerMixin extends ClientCommonPacketListenerImpl {
+	protected ClientPacketListenerMixin(Minecraft minecraft, Connection connection, CommonListenerCookie commonListenerCookie) {
 		super(minecraft, connection, commonListenerCookie);
 	}
 

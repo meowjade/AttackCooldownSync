@@ -4,6 +4,6 @@
   "package": "org.jade.hitcooldownsync.mixin",
   "compatibilityLevel": "JAVA_21",
   "client": [
-    "CLientPacketListenerMixin"
+    "ClientPacketListenerMixin"
   ]
 }
